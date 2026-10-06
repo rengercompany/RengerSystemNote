@@ -8,6 +8,9 @@ interface NoteDao {
     @Query("SELECT * FROM notes ORDER BY timestamp DESC")
     fun getAllNotes(): Flow<List<Note>>
 
+    @Query("SELECT * FROM notes WHERE folderId = :folderId ORDER BY timestamp DESC")
+    fun getNotesByFolder(folderId: Int): Flow<List<Note>>
+
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun getNoteById(id: Int): Note?
 

@@ -9,5 +9,10 @@ data class Note(
     val title: String,
     val content: String,
     val timestamp: Long = System.currentTimeMillis(),
-    val color: Int = 0xFF6C63FF.toInt()
-)
+    val color: Int = 0xFF6C63FF.toInt(),
+    val folderId: Int? = null,
+    val tags: String = "" // теги через запятую: "работа,важное,идеи"
+) {
+    fun tagList(): List<String> =
+        tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+}
