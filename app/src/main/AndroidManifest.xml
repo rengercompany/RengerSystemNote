@@ -4,7 +4,7 @@
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="Renger System | Note"
+        android:label="string/app_name"
         android:theme="@style/Theme.RengerNote">
         <activity
             android:name=".MainActivity"
