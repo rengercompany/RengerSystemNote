@@ -3,6 +3,7 @@ package com.renger.system.note.ui.screens
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -11,9 +12,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -42,6 +43,7 @@ fun NotesListScreen(navController: NavController, viewModel: NoteViewModel) {
     var selectedTag by remember { mutableStateOf<String?>(null) }
     var showFolderDialog by remember { mutableStateOf(false) }
     var showTagFilter by remember { mutableStateOf(false) }
+    var folderToDelete by remember { mutableStateOf<Folder?>(null) }
 
     // Собираем все уникальные теги
     val allTags = remember(notes) {
@@ -122,6 +124,14 @@ fun NotesListScreen(navController: NavController, viewModel: NoteViewModel) {
                 ) {
                     Icon(Icons.Default.CreateNewFolder, null, modifier = Modifier.size(18.dp))
                 }
+                Spacer(Modifier.weight(1f))
+                if (folders.isNotEmpty()) {
+                    Text(
+                        "Долгий тап — удалить",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+                    )
+                }
             }
 
             LazyRow(
@@ -142,7 +152,8 @@ fun NotesListScreen(navController: NavController, viewModel: NoteViewModel) {
                         color = Color(folder.color),
                         onClick = {
                             selectedFolderId = if (selectedFolderId == folder.id) null else folder.id
-                        }
+                        },
+                        onLongClick = { folderToDelete = folder }
                     )
                 }
             }
@@ -159,8 +170,7 @@ fun NotesListScreen(navController: NavController, viewModel: NoteViewModel) {
                         onClick = { showTagFilter = !showTagFilter },
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text(if (showTagFilter) "Скрыть" else "Показать",
-                            fontSize = 12.sp)
+                        Text(if (showTagFilter) "Скрыть" else "Показать", fontSize = 12.sp)
                     }
                 }
 
@@ -259,7 +269,8 @@ fun NotesListScreen(navController: NavController, viewModel: NoteViewModel) {
                             ) {
                                 if (folderColor == c)
                                     Icon(Icons.Default.Folder, null,
-                                        tint = Color.White, modifier = Modifier.size(18.dp))
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp))
                             }
                         }
                     }
@@ -278,20 +289,58 @@ fun NotesListScreen(navController: NavController, viewModel: NoteViewModel) {
             }
         )
     }
+
+    // Диалог удаления папки
+    folderToDelete?.let { folder ->
+        AlertDialog(
+            onDismissRequest = { folderToDelete = null },
+            title = { Text("Удалить папку?") },
+            text = {
+                Text("Папка «${folder.name}» будет удалена.\n" +
+                     "Заметки внутри останутся, но станут без папки.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteFolder(folder)
+                        if (selectedFolderId == folder.id) selectedFolderId = null
+                        folderToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) { Text("Удалить") }
+            },
+            dismissButton = {
+                TextButton(onClick = { folderToDelete = null }) { Text("Отмена") }
+            }
+        )
+    }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun FolderChip(name: String, selected: Boolean, color: Color? = null, onClick: () -> Unit) {
+fun FolderChip(
+    name: String,
+    selected: Boolean,
+    color: Color? = null,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null
+) {
     val bg = when {
         selected -> MaterialTheme.colorScheme.primary
         color != null -> color.copy(alpha = 0.2f)
         else -> MaterialTheme.colorScheme.surface
     }
     Surface(
-        onClick = onClick,
         shape = RoundedCornerShape(20.dp),
         color = bg,
-        modifier = Modifier.height(32.dp)
+        modifier = Modifier
+            .height(32.dp)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
     ) {
         Row(
             Modifier.padding(horizontal = 12.dp),
@@ -299,7 +348,8 @@ fun FolderChip(name: String, selected: Boolean, color: Color? = null, onClick: (
         ) {
             Icon(Icons.Default.Folder, null,
                 modifier = Modifier.size(14.dp),
-                tint = if (selected) Color.White else (color ?: MaterialTheme.colorScheme.onSurface))
+                tint = if (selected) Color.White
+                       else (color ?: MaterialTheme.colorScheme.onSurface))
             Spacer(Modifier.width(4.dp))
             Text(
                 name,
@@ -358,7 +408,6 @@ fun NoteCard(
             )
             Spacer(Modifier.height(8.dp))
 
-            // Папка
             if (folder != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Folder, null,
@@ -386,7 +435,6 @@ fun NoteCard(
                 maxLines = 5
             )
 
-            // Теги
             val tags = note.tagList()
             if (tags.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))
