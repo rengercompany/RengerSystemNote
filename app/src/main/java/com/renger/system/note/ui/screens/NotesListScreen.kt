@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
@@ -111,7 +112,7 @@ fun NotesListScreen(navController: NavController, viewModel: NoteViewModel) {
 
             Spacer(Modifier.height(12.dp))
 
-            // Папки (горизонтальный скролл)
+            // Папки
             Row(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -158,7 +159,7 @@ fun NotesListScreen(navController: NavController, viewModel: NoteViewModel) {
                 }
             }
 
-            // Теги (фильтр)
+            // Теги
             if (allTags.isNotEmpty()) {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -435,6 +436,24 @@ fun NoteCard(
                 maxLines = 5
             )
 
+            // Вложения (счётчик)
+            val attachCount = note.attachmentList().size
+            if (attachCount > 0) {
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.AttachFile, null,
+                        modifier = Modifier.size(11.dp),
+                        tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(3.dp))
+                    Text(
+                        "$attachCount вложени${if (attachCount == 1) "е" else "й"}",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            // Теги
             val tags = note.tagList()
             if (tags.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))
