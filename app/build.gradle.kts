@@ -16,9 +16,25 @@ android {
         versionName = "1.0"
     }
 
+    // ⬇️ ДЛЯ GOOGLE PLAY — подпись релиза
+    signingConfigs {
+        create("release") {
+            storeFile = file("../keystore/renger-release.jks")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "renger123"
+            keyAlias = System.getenv("KEY_ALIAS") ?: "renger"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "renger123"
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
@@ -28,6 +44,11 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    // ⬇️ Google Play требует AAB по умолчанию, но APK тоже можно
+    bundle {
+        language { enableSplit = false }
     }
 }
 
